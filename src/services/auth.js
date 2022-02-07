@@ -8,7 +8,8 @@ import {
 } from 'firebase/auth';
 
 // Services
-import firebaseApp from './firebase';
+import firebaseApp from '@/services/firebase';
+import { createUser } from '@/services/db';
 
 const auth = getAuth(firebaseApp);
 
@@ -17,7 +18,7 @@ const gitHubProvider = new GithubAuthProvider();
 
 const authContext = createContext();
 
-export function ProvideAuth({ children }) {
+export function AuthProvider({ children }) {
     const auth = useProvideAuth();
     return <authContext.Provider value={auth}>{children}</authContext.Provider>;
 }
@@ -26,8 +27,30 @@ export const useAuth = () => {
     return useContext(authContext);
 };
 
-function useProvideAuth() {
+const useProvideAuth = () => {
     const [user, setUser] = useState(null);
+
+    const formatUser = (user) => {
+        return {
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName,
+            provider: user.providerData[0].providerId
+        };
+    };
+
+    const handleUser = (rawUser) => {
+        if (rawUser) {
+            const user = formatUser(rawUser);
+
+            createUser(user.uid, user);
+            setUser(user);
+            return user;
+        }
+
+        setUser(false);
+        return false;
+    };
 
     const signinWithGithub = async () => {
         const response = await signInWithPopup(auth, gitHubProvider);
@@ -43,13 +66,7 @@ function useProvideAuth() {
     };
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setUser(user);
-            } else {
-                setUser(false);
-            }
-        });
+        const unsubscribe = onAuthStateChanged(auth, handleUser);
 
         return () => unsubscribe();
     }, []);
@@ -59,4 +76,4 @@ function useProvideAuth() {
         signinWithGithub,
         signOut: signout
     };
-}
+};
