@@ -1,34 +1,40 @@
 import Head from 'next/head';
-import { Button, Code } from '@chakra-ui/react';
+import useSWR from 'swr';
+import { Button, Code, Flex } from '@chakra-ui/react';
 
 // Hooks
 import { useAuth } from '@/services/auth';
 
+// Helpers
+import fetcher from '@/helpers/fetcher';
+
 const Home = () => {
-    const auth = useAuth();
+    const { user, signOut, signinWithGithub } = useAuth();
+    const { data } = useSWR(user ? ['/api/hello', user.token] : null, fetcher);
 
     return (
-        <div>
+        <Flex direction="column">
             <Head>
                 <title>Saas Template</title>
             </Head>
 
-            <main>
-                {auth?.user ? (
+            <Flex direction={'column'} alignItems={'center'}>
+                {user ? (
                     <Button
                         backgroundColor={'red.100'}
-                        onClick={() => auth.signOut()}
+                        onClick={() => signOut()}
                     >
                         Sign out
                     </Button>
                 ) : (
-                    <Button onClick={() => auth.signinWithGithub()}>
+                    <Button onClick={() => signinWithGithub()}>
                         Sign in
                     </Button>
                 )}
-                <Code>{auth?.user?.email}</Code>
-            </main>
-        </div>
+                <Code mt={4}>{user?.email}</Code>
+                <Code mt={4}>{data?.message}</Code>
+            </Flex>
+        </Flex>
     );
 };
 

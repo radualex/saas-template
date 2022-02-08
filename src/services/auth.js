@@ -35,21 +35,10 @@ const useProvideAuth = () => {
             uid: user.uid,
             email: user.email,
             name: user.displayName,
-            provider: user.providerData[0].providerId
+            provider: user.providerData[0].providerId,
+            photoUrl: user.photoURL,
+            token: user.accessToken
         };
-    };
-
-    const handleUser = (rawUser) => {
-        if (rawUser) {
-            const user = formatUser(rawUser);
-
-            createUser(user.uid, user);
-            setUser(user);
-            return user;
-        }
-
-        setUser(false);
-        return false;
     };
 
     const signinWithGithub = async () => {
@@ -66,6 +55,19 @@ const useProvideAuth = () => {
     };
 
     useEffect(() => {
+        const handleUser = (rawUser) => {
+            if (rawUser) {
+                const user = formatUser(rawUser);
+
+                createUser(user.uid, user);
+                setUser(user);
+                return user;
+            }
+
+            setUser(false);
+            return false;
+        };
+
         const unsubscribe = onAuthStateChanged(auth, handleUser);
 
         return () => unsubscribe();
